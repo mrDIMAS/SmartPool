@@ -16,6 +16,11 @@ Pool implementation is object-agnostic, so you can store any suitable object in 
 
 SmartPool requires C++11-compliant compiler. To use pool, just copy Pool.h to your source directory.
 
+# Notes
+Your object should have constructor without arguments. 
+
+Create pool with large enough capacity, because any Spawn method called on full pool will result in memory reallocation and memory movement, which is quite expensive operations.
+
 # Examples
 
 ```c++
@@ -40,15 +45,21 @@ pool.Return(baz);
 ```
 
 # How it works
+Firstly, pool allocates memory block with initial size = initialCapacity * recordSize, fills it with special marks, which indicates that memory piece is unused. Also pool creates list of indices of free memory blocks.
 
+When user calls Spawn method, pool pops index of free memory block, constructs object in it using placement new, makes new stamp and returns handle to the user.
+
+When user calls Return methos, pool returns index of the object to "free list", marks object as free and calls destructor of the object.
+
+When pool is destroyed, it calls destructors of all "busy" objects inside of it. So there is not memory leaks in the end.
 
 # Q&A
 
-Q: How fast is Spawn method?
-A: Spawn method has amortized complexity of O(1).
+*Q*: How fast is Spawn method?
+*A*: Spawn method has amortized complexity of O(1).
 
-Q: How fast is Return method?
-A: Return method has complexity of O(1).
+*Q*: How fast is Return method?
+*A*: Return method has amortized complexity of O(1).
 
 # Tests
 

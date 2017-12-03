@@ -27,33 +27,34 @@ Overview:
 Pool serves for the few goals: eliminates unnecessary memory allocations,
 preserves data locality, gives mechanism of control for object indices.
 
-This pool provides user the easy way of control for spawned objects thru special
-handles. Why we can't use ordinary pointers? Answer is simple: when pool grows,
-it's memory block may change it's position in memory and all pointers will
-become invalid. To avoid this problem, we use indices.
+This pool provides user the easy way of control for spawned objects through
+special handles. Why we can't use ordinary pointers? Answer is simple: when pool
+grows, it's memory block may change it's position in memory and all pointers
+will become invalid. To avoid this problem, we use handles.
 
-Objects inside of a pool stored in continuous array, which is good for cpu
-cache.
+What is "handle"? Handle is something like index, but with additional
+information, that allows us to ensure that handle "points" to same object as
+before. This additional info called "stamp". When you asks pool for a new
+object, pool marks it with unique "stamp" and gives you handle with index of a
+new object and "stamp" of an object. Now if you want to ensure, that handle
+"points" to same object as before, you just compare "stamps" - if they are same,
+then handle is correct.
 
 Pool implementation is object-agnostic, so you can store any suitable object in
 it. It also may contain non-POD objects.
 
 =============
 How it works:
-Allocate memory block with initial size = capacity * recordSize, fill it with
-zeros
+Firstly, pool allocates memory block with initial size = initialCapacity *
+recordSize, fills it with special marks, which indicates that memory piece is
+unused. Also pool creates list of indices of free memory blocks.
 
-The main idea of this pool is to provide user not object or pointers itselves,
-but to provide special handles to objects inside of a pool. Such handles
-contains actual object index in the pool's array and special stamp field. Stamp
-field used to ensure, that the handle is a handle to the right object. In other
-words, you spawn object A from a pool, store it index in few places, then you
-return A to the pool. Then you spawn a new object, it overwrites our object A.
-Now you have few invalid indices to unexisted object A in different parts of
-your app. How can you ensure that some index is an index to object A? Correct
-answer is: you can't. But if you add some additional "stamp" info to the index,
-you can ensure that you have correct handle just by comparing "stamp" of the
-index and 'stamp' of the object. Such "index + stamp" construct called handle.
+When user calls Spawn method, pool pops index of free memory block, constructs
+object in it using placement new, makes new stamp and returns handle to the
+user.
+
+When user calls Return methos, pool returns index of the object to "free list",
+marks object as free and calls destructor of the object.
 
 =============
 Notes:
@@ -65,12 +66,11 @@ expensive operation
 =============
 Q&A:
 
-Q: How fast this pool?
-A: Well, performance relies on correct usage of this pool. First of all, you
-should create this pool with large enough capacity to reduce reallocations of
-memory. Secondly, performance of the Spawn method is O(n) (where n - count of
-free objects) in worst case.
+Q: How fast is Spawn method?
+A: Spawn method has amortized complexity of O(1).
 
+Q: How fast is Return method?
+A: Return method has amortized complexity of O(1).
 
 =============
 Example:
@@ -278,7 +278,7 @@ public:
     return mRecords[handle.mIndex].mObject;
   }
   // Same as At
-  T &operator[](const Handle<T> &handle) const {    
+  T &operator[](const Handle<T> &handle) const {
     return At(handle);
   }
   size_t GetSpawnedCount() const noexcept {
@@ -309,14 +309,14 @@ public:
     // Offset ptr to get record
     const auto record = reinterpret_cast<const PoolRecord<T> *>(
         reinterpret_cast<const char *>(ptr) - sizeof(Stamp));
-    
+
     const auto p0 = reinterpret_cast<const intptr_t>(&mRecords[0]);
     const auto pn = reinterpret_cast<const intptr_t>(record);
 
     // Calculate index
     const intptr_t distance = pn - p0;
     const intptr_t index = distance / sizeof(PoolRecord<T>);
-        
+
     return Handle<T>(index, record->mStamp);
   }
 };
