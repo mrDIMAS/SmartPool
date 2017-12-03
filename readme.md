@@ -2,26 +2,26 @@
 
 SmartPool is an object pool single-header library for fast object allocation. All objects inside of a pool placed in a contiguous memory block to be cache-friendly.
 
-# Overview
+## Overview
 
 Pool serves for the few goals: eliminates unnecessary memory allocations, preserves data locality, gives mechanism of control for object indices.
 
 This pool provides user the easy way of control for spawned objects through special handles. Why we can't use ordinary pointers? Answer is simple: when pool grows, it's memory block may change it's position in memory and all pointers will become invalid. To avoid this problem, we use handles. 
 
-What is "handle"? Handle is something like index, but with additional information, that allows us to ensure that handle "points" to same object as before. This additional info called "stamp". When you asks pool for a new object, pool marks it with unique "stamp" and gives you handle with index of a new object and "stamp" of an object. Now if you want to ensure, that handle "points" to same object as before, you just compare "stamps" - if they are same, then handle is correct.
+What is "handle"? Handle is something like index, but with additional information, that allows us to ensure that handle "points" to same object as before. This additional info called "stamp". When you asks pool for a new object, pool marks it with unique "stamp" and gives you handle with index of a new object and "stamp" of an object. Now if you want to ensure, that handle "points" to same object as before, you just compare "stamps" - if they are same, then handle is correct (you can check handle validity using IsValid method).
 
 Pool implementation is object-agnostic, so you can store any suitable object in it. It also may contain non-POD objects.
 
-# Installation
+## Installation
 
 SmartPool requires C++11-compliant compiler. To use pool, just copy Pool.h to your source directory.
 
-# Notes
+## Notes
 Your object should have constructor without arguments. 
 
 Create pool with large enough capacity, because any Spawn method called on full pool will result in memory reallocation and memory movement, which is quite expensive operations.
 
-# Examples
+## Examples
 
 ```c++
 class Foo {
@@ -40,11 +40,24 @@ Handle<Foo> baz = pool.Spawn(42); // spawn object with any args
 
 // do something
 
+// return object to pool
 pool.Return(bar);
 pool.Return(baz);
+
+...
+
+// somewhere in the code
+
+// check handle for validity
+if(pool.IsValid(baz)) {
+  cout << "Baz is valid" << endl;
+} else {
+  cout << "Baz is invalid" << endl;
+}
+
 ```
 
-# How it works
+## How it works
 Firstly, pool allocates memory block with initial size = initialCapacity * recordSize, fills it with special marks, which indicates that memory piece is unused. Also pool creates list of indices of free memory blocks.
 
 When user calls Spawn method, pool pops index of free memory block, constructs object in it using placement new, makes new stamp and returns handle to the user.
@@ -53,19 +66,19 @@ When user calls Return methos, pool returns index of the object to "free list", 
 
 When pool is destroyed, it calls destructors of all "busy" objects inside of it. So there is not memory leaks in the end.
 
-# Q&A
+## Q&A
 
-*Q*: How fast is Spawn method?
-*A*: Spawn method has amortized complexity of O(1).
+**Q**: How fast is Spawn method?
+**A**: Spawn method has amortized complexity of O(1).
 
-*Q*: How fast is Return method?
-*A*: Return method has amortized complexity of O(1).
+**Q**: How fast is Return method?
+**A**: Return method has amortized complexity of O(1).
 
-# Tests
+## Tests
 
 Tests (sanity and performance) are all in Tests.cpp.
 
-# License
+## License
 
 The MIT License
 
