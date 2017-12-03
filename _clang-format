@@ -1,0 +1,4 @@
+BasedOnStyle: LLVM
+SortIncludes: false
+AllowShortFunctionsOnASingleLine: false
+AlignAfterOpenBracket: DontAlign
