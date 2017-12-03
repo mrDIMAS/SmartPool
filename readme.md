@@ -4,9 +4,9 @@ SmartPool is an object pool single-header library for fast object allocation. Al
 
 ## Overview
 
-Pool serves for the few goals: eliminates unnecessary memory allocations, preserves data locality, gives mechanism of control for object indices.
+Pool serves for a few goals: eliminates unnecessary memory allocations, preserves data locality, gives mechanism of control for object indices.
 
-This pool provides user the easy way of control for spawned objects through special handles. Why we can't use ordinary pointers? Answer is simple: when pool grows, it's memory block may change it's position in memory and all pointers will become invalid. To avoid this problem, we use handles. 
+This pool provides user the easy way of control for spawned objects through special handles. Why we can't use ordinary pointers? Answer is simple: when pool grows, its memory block may change its position in memory and all pointers will become invalid. To avoid this problem, we use handles. 
 
 What is "handle"? Handle is something like index, but with additional information, that allows us to ensure that handle "points" to same object as before. This additional info called "stamp". When you asks pool for a new object, pool marks it with unique "stamp" and gives you handle with index of a new object and "stamp" of an object. Now if you want to ensure, that handle "points" to same object as before, you just compare "stamps" - if they are same, then handle is correct (you can check handle validity using IsValid method).
 
@@ -62,9 +62,9 @@ Firstly, pool allocates memory block with initial size = initialCapacity * recor
 
 When user calls Spawn method, pool pops index of free memory block, constructs object in it using placement new, makes new stamp and returns handle to the user.
 
-When user calls Return methos, pool returns index of the object to "free list", marks object as free and calls destructor of the object.
+When user calls Return method, pool returns index of the object to "free list", marks object as free and calls destructor of the object.
 
-When pool is destroyed, it calls destructors of all "busy" objects inside of it. So there is not memory leaks in the end.
+When pool is destroyed, it calls destructors of all "busy" objects inside of it. So there is no memory leaks in the end.
 
 ## Q&A
 
