@@ -21,6 +21,29 @@ Your object should have constructor without arguments.
 
 Create pool with large enough capacity, because any Spawn method called on full pool will result in memory reallocation and memory movement, which is quite expensive operations.
 
+You can pass your own memory allocation/deallocation functions as 2nd and 3rd parameters in Pool constructor.
+
+If you need to excessively access pool from any class that is stored in pool, derive your from Poolable<T> like this:
+```c++
+class Foo : public Poolable<Foo> {
+...
+};
+```
+Now when you need to access owning pool, call ParentPool()
+```c++
+class Foo : public Poolable<Foo> {
+	PoolHandle<T> mSomeHandle;
+	void DoSomething() {
+		Pool<Foo>* pool = ParentPool();
+		
+		if(pool->IsValid(mSomeHandle)) {
+			auto & object = pool->At(mSomeHandle);
+		}
+	}
+};
+```
+Why this works? Inside of Spawn method, pool checks if stored class have base of Poolable<T> , and if it does, just sets some internal variable of Poolable<T>.
+
 ## Examples
 
 ```c++
@@ -35,8 +58,8 @@ public:
 ...
 
 Pool<Foo> pool(1024); // make pool with default capacity of 1024 objects
-Handle<Foo> bar = pool.Spawn(); // spawn object with default constructor
-Handle<Foo> baz = pool.Spawn(42); // spawn object with any args
+PoolHandle<Foo> bar = pool.Spawn(); // spawn object with default constructor
+PoolHandle<Foo> baz = pool.Spawn(42); // spawn object with any args
 
 // do something
 
@@ -82,7 +105,7 @@ Tests (sanity and performance) are all in Tests.cpp.
 
 The MIT License
 
-Copyright (c) 2017 Stepanov Dmitriy
+Copyright (c) 2017-2018 Stepanov Dmitriy a.k.a mr.DIMAS a.k.a v1al
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
