@@ -23,7 +23,7 @@ Create pool with large enough capacity, because any Spawn method called on full 
 
 You can pass your own memory allocation/deallocation functions as 2nd and 3rd parameters in Pool constructor.
 
-If you need to excessively access pool from any class that is stored in pool, derive your from Poolable<T> like this:
+If you need to excessively access pool from any class that is stored in pool, derive your class from Poolable<T> like this:
 ```c++
 class Foo : public Poolable<Foo> {
 ...
@@ -32,7 +32,7 @@ class Foo : public Poolable<Foo> {
 Now when you need to access owning pool, call ParentPool()
 ```c++
 class Foo : public Poolable<Foo> {
-	PoolHandle<T> mSomeHandle;
+	PoolHandle<Foo> mSomeHandle;
 	void DoSomething() {
 		Pool<Foo>* pool = ParentPool();
 		
@@ -42,7 +42,7 @@ class Foo : public Poolable<Foo> {
 	}
 };
 ```
-Why this works? Inside of Spawn method, pool checks if stored class have base of Poolable<T> , and if it does, just sets some internal variable of Poolable<T>.
+Why this works? Inside of Spawn method, pool checks if stored class have base of Poolable<T>, and if it does, just sets some internal variable of Poolable<T>. 
 
 ## Examples
 
