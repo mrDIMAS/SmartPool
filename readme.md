@@ -23,7 +23,7 @@ Create pool with large enough capacity, because any Spawn method called on full 
 
 You can pass your own memory allocation/deallocation functions as 2nd and 3rd parameters in Pool constructor.
 
-If you need to excessively access pool from any class that is stored in pool, derive your class from Poolable<T> like this:
+If you need to use pool from any class that is stored in the pool, inherit your class from Poolable<T> like this:
 ```c++
 class Foo : public Poolable<Foo> {
 ...
